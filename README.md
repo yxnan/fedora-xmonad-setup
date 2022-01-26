@@ -34,7 +34,7 @@ This `xmonad.hs` is based on [DistroTube's setup](https://gitlab.com/dwt1/dotfil
 	# alacritty:    terminal emulator
 	# fish:         shell
 	# dmenu:        dynamic menu for X
-	# slock:        screen lock0
+	# slock:        screen lock
 	# pactl:        volume control
 	# light:        brightness adjust
 	# fehbg:        wallpaper setting
@@ -65,3 +65,7 @@ Almost done!
 1. Fira Code
 1. Mononoki Nerd Font
 1. Sarasa Gothic
+
+## Tweaks
+1. `.Xresources` --> Rules for font antialiasing of Wine applications (I don't use wine but in case)
+2. `.xsettingsd` --> Rules for font antialiasing of Java apps
