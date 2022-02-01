@@ -18,9 +18,8 @@ import qualified XMonad.Actions.Search as S
 
     -- Data
 import Data.Char (isSpace, toUpper)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, isJust)
 import Data.Monoid
-import Data.Maybe (isJust)
 import Data.Tree
 import qualified Data.Map as M
 
@@ -76,7 +75,7 @@ myTerminal :: String
 myTerminal = "alacritty"    -- Sets default terminal
 
 myBrowser :: String
-myBrowser = "brave-browser"  -- Sets qutebrowser as browser
+myBrowser = "brave-browser"  -- Sets brave as browser
 
 myEditor :: String
 myEditor = myTerminal ++ " -e vim "    -- Sets vim as editor
@@ -95,9 +94,9 @@ windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace
 
 myStartupHook :: X ()
 myStartupHook = do
-    spawnOnce "gnome-keyring-daemon --daemonize --login"
     spawnOnce "/usr/libexec/polkit-gnome-authentication-agent-1 &"
     spawnOnce "~/bin/cache-init &"
+    spawnOnce "~/.xmonad/switch-monitor &"
     spawnOnce "keepassxc &"
     spawnOnce "/usr/libexec/kdeconnectd &"
     spawnOnce "kdeconnect-indicator &"
@@ -303,7 +302,7 @@ myLayoutHook = avoidStruts $ mouseResize $ windowArrange -- $ T.toggleLayouts fl
                                  -- ||| wideAccordion
 
 myWorkspaces = ["dev", "www", "doc", "eda", "utl", "mus", "vid", "gfx", "bg"]
-myWorkspaceIndices = M.fromList $ zipWith (,) myWorkspaces [1..] -- (,) == \x y -> (x,y)
+myWorkspaceIndices = M.fromList $ zip myWorkspaces [1..] -- (,) == \x y -> (x,y)
 
 clickable ws = "<action=xdotool key super+"++show i++">"++ws++"</action>"
     where i = fromJust $ M.lookup ws myWorkspaceIndices
@@ -364,8 +363,8 @@ myKeys =
         -- , ("M-p s", spawn "dm-websearch") -- search various search engines
 
     -- Useful programs to have a keybinding for launch
-        , ("M-<Return>", spawn (myTerminal))
-        , ("M-b", spawn (myBrowser))
+        , ("M-<Return>", spawn myTerminal)
+        , ("M-b", spawn myBrowser)
 
     -- Kill windows
         , ("M-S-c", kill1)     -- Kill the currently focused client
@@ -476,7 +475,7 @@ main = do
         , modMask            = myModMask
         , terminal           = myTerminal
         , startupHook        = myStartupHook
-        , layoutHook         = showWName' myShowWNameTheme $ myLayoutHook
+        , layoutHook         = showWName' myShowWNameTheme myLayoutHook
         , workspaces         = myWorkspaces
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor

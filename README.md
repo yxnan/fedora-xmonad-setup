@@ -4,20 +4,6 @@ This `xmonad.hs` is based on [DistroTube's setup](https://gitlab.com/dwt1/dotfil
 
 ## Setup procedures
 
-1. Grab [GHCup](https://www.haskell.org/ghcup/)
-
-1. Install XMonad compiling dependencies
-
-	```bash
-	sudo dnf install gmp-devel libX11-devel libXrandr-devel libXScrnSaver-devel
-	```
-
-1. Compile XMonad and Contrib extensions
-
-	```bash
-	cabal install xmonad
-	cabal install --lib xmonad-contrib
-	```
 1. Install XMonad from distro repository to get a better system integrity
 
 	```bash
@@ -68,4 +54,4 @@ Almost done!
 
 ## Tweaks
 1. `.Xresources` --> Rules for font antialiasing of Wine applications (I don't use wine but in case)
-2. `.xsettingsd` --> Rules for font antialiasing of Java apps
+1. `.xsettingsd` --> Rules for font antialiasing of Java apps

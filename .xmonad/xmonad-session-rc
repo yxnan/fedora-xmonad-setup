@@ -1,12 +1,11 @@
 #!/bin/bash
 
-rm -f ~/.xmonad/xmonad.state
-
 xset s off
 xset s 0 0
 xset -dpms
 
 # input method
+# you don't need this in fedora because the startup services already done it
 export GTK_IM_MODULE=ibus
 export QT_IM_MODULE=ibus
 export XMODIFIERS=@im=ibus
