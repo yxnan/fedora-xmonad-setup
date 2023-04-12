@@ -26,9 +26,10 @@ import qualified Data.Map as M
     -- Hooks
 import XMonad.Hooks.DynamicLog (dynamicLogWithPP, wrap, xmobarPP, xmobarColor, shorten, PP(..))
 import XMonad.Hooks.EwmhDesktops  -- for some fullscreen events, also for xcomposite in obs.
-import XMonad.Hooks.ManageDocks (avoidStruts, docksEventHook, manageDocks, ToggleStruts(..))
+import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers (isFullscreen, doFullFloat)
 import XMonad.Hooks.ServerMode
+import XMonad.Hooks.StatusBar.PP (filterOutWsPP)
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.WorkspaceHistory
 
@@ -61,6 +62,7 @@ import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
    -- Utilities
 import XMonad.Util.Dmenu
 import XMonad.Util.EZConfig (additionalKeysP)
+import XMonad.Util.Hacks (windowedFullscreenFixEventHook)
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)
 import XMonad.Util.SpawnOnce
@@ -97,9 +99,7 @@ myStartupHook = do
     spawnOnce "/usr/libexec/polkit-gnome-authentication-agent-1 &"
     spawnOnce "~/bin/cache-init &"
     spawnOnce "~/.xmonad/switch-monitor &"
-    spawnOnce "keepassxc &"
-    spawnOnce "/usr/libexec/kdeconnectd &"
-    spawnOnce "kdeconnect-indicator &"
+    spawnOnce "volumeicon &"
     spawnOnce "compton -b"
     spawnOnce "xsettingsd &"                 -- antialiasing for Java apps, see ~/.xsettingsd
     spawnOnce "xrdb -merge ~/.Xresources &"  -- antialiasing for wine
@@ -144,14 +144,14 @@ spawnSelected' lst = gridselect conf lst >>= flip whenJust spawn
                    , gs_font         = myFont
                    }
 
-myAppGrid = [      ("Nautilus", "nautilus")
+myAppGrid = [      ("PCManFM", "pcmanfm")
                  , ("GNOME Control Center", "gnome-control-center")
-                 , ("Xournal++", "xournalpp")
                  , ("GNOME System Monitor", "gnome-system-monitor")
                  , ("STM32CubeMX", "~/app/STM32CubeMX/STM32CubeMX")
-                 , ("Dropbox", "dropbox start -i")
-                 , ("Cisco AnyConnect", "/opt/cisco/anyconnect/bin/vpnui")
-                 , ("Audacity", "audacity")
+                 , ("QQ", "flatpak run --command=qq com.qq.QQ")
+                 , ("OnlyOffice", "flatpak run --command=desktopeditors org.onlyoffice.desktopeditors")
+                 , ("Obsidian", "flatpak run --command=obsidian.sh md.obsidian.Obsidian")
+                 , ("Builder", "flatpak run --command=gnome-builder org.gnome.Builder")
                  , ("itch.io", "~/.itch/itch")
                  ]
 
@@ -170,7 +170,7 @@ myScratchPads = [ NS "terminal" spawnTerm findTerm manageTerm
                  t = 0.95 -h
                  l = 0.95 -w
     spawnCalc  = "gnome-calculator"
-    findCalc   = title =? "Calculator"
+    findCalc   = className =? "gnome-calculator"
     manageCalc = customFloating $ W.RationalRect l t w h
                where
                  h = 0.5
@@ -290,10 +290,10 @@ myLayoutHook = avoidStruts $ mouseResize $ windowArrange -- $ T.toggleLayouts fl
                $ mkToggle (NBFULL ?? NOBORDERS ?? EOT) myDefaultLayout
              where
                myDefaultLayout =     withBorder myBorderWidth tall
+                                 ||| noBorders tabs
                                  -- ||| magnify
                                  ||| noBorders monocle
                                  -- ||| floats
-                                 ||| noBorders tabs
                                  ||| grid
                                  -- ||| spirals
                                  -- ||| threeCol
@@ -321,6 +321,7 @@ myManageHook = composeAll
      , className =? "notification"    --> doFloat
      , className =? "splash"          --> doFloat
      , className =? "toolbar"         --> doFloat
+     , className =? "re.sonny.Commit" --> doFloat
      , appName =? "google-chrome"     --> doShift "www"
      , appName =? "brave-browser"     --> doShift "www"
      , appName =? "kicad"             --> doShift "eda" -- ( myWorkspaces !! 2 )
@@ -346,22 +347,6 @@ myKeys =
     -- Run Prompt
         , ("M-S-<Return>", spawn "dmenu_run -i -p \"Run: \"") -- Dmenu
 
-    -- Other Dmenu Prompts
-    -- In Xmonad and many tiling window managers, M-p is the default keybinding to
-    -- launch dmenu_run, so I've decided to use M-p plus KEY for these dmenu scripts.
-        -- , ("M-p a", spawn "dm-sounds")    -- choose an ambient background
-        -- , ("M-p b", spawn "dm-setbg")     -- set a background
-        -- , ("M-p c", spawn "dm-colpick")   -- pick color from our scheme
-        -- , ("M-p e", spawn "dm-confedit")  -- edit config files
-        -- , ("M-p i", spawn "dm-maim")      -- screenshots (images)
-        -- , ("M-p k", spawn "dm-kill")      -- kill processes
-        -- , ("M-p m", spawn "dm-man")       -- manpages
-        -- , ("M-p o", spawn "dm-bookman")   -- qutebrowser bookmarks/history
-        -- , ("M-p p", spawn "passmenu")     -- passmenu
-        -- , ("M-p q", spawn "dm-logout")    -- logout menu
-        -- , ("M-p r", spawn "dm-reddit")    -- reddio (a reddit viewer)
-        -- , ("M-p s", spawn "dm-websearch") -- search various search engines
-
     -- Useful programs to have a keybinding for launch
         , ("M-<Return>", spawn myTerminal)
         , ("M-b", spawn myBrowser)
@@ -371,16 +356,25 @@ myKeys =
         , ("M-S-a", killAll)   -- Kill all windows on current workspace
 
     -- Workspaces
-        -- , ("M-.", nextScreen)  -- Switch focus to next monitor
-        -- , ("M-,", prevScreen)  -- Switch focus to prev monitor
+        , ("M-.", nextScreen)  -- Switch focus to next monitor
+        , ("M-,", prevScreen)  -- Switch focus to prev monitor
         , ("M-S-<KP_Add>", shiftTo Next nonNSP >> moveTo Next nonNSP)       -- Shifts focused window to next ws
         , ("M-S-<Right>", shiftTo Next nonNSP >> moveTo Next nonNSP)        -- Shifts focused window to next ws
         , ("M-S-<KP_Subtract>", shiftTo Prev nonNSP >> moveTo Prev nonNSP)  -- Shifts focused window to prev ws
         , ("M-S-<Left>", shiftTo Prev nonNSP >> moveTo Prev nonNSP)         -- Shifts focused window to prev ws
+        , ("M-S-1", windows $ W.shift $ myWorkspaces !! 0)                  -- Send to workspace 1
+        , ("M-S-2", windows $ W.shift $ myWorkspaces !! 1)                  -- Send to workspace 2
+        , ("M-S-3", windows $ W.shift $ myWorkspaces !! 2)                  -- Send to workspace 3
+        , ("M-S-4", windows $ W.shift $ myWorkspaces !! 3)                  -- Send to workspace 4
+        , ("M-S-5", windows $ W.shift $ myWorkspaces !! 4)                  -- Send to workspace 5
+        , ("M-S-6", windows $ W.shift $ myWorkspaces !! 5)                  -- Send to workspace 6
+        , ("M-S-7", windows $ W.shift $ myWorkspaces !! 6)                  -- Send to workspace 7
+        , ("M-S-8", windows $ W.shift $ myWorkspaces !! 7)                  -- Send to workspace 8
+        , ("M-S-9", windows $ W.shift $ myWorkspaces !! 8)                  -- Send to workspace 9
 
     -- Floating windows
-        -- , ("M-f", sendMessage (T.Toggle "floats")) -- Toggles my 'floats' layout
-        -- , ("M-t", withFocused $ windows . W.sink)  -- Push floating window back to tile
+        , ("M-f", sendMessage (T.Toggle "floats")) -- Toggles my 'floats' layout
+        , ("M-t", withFocused $ windows . W.sink)  -- Push floating window back to tile
         , ("M-S-t", sinkAll)                       -- Push ALL floating windows to tile
 
     -- Increase/decrease spacing (gaps)
@@ -464,14 +458,9 @@ main = do
     -- xmproc1 <- spawnPipe "xmobar -x 1 $HOME/.config/xmobar/xmobarrc1"
     -- xmproc2 <- spawnPipe "xmobar -x 2 $HOME/.config/xmobar/xmobarrc2"
     -- the xmonad, ya know...what the WM is named after!
-    xmonad $ ewmh def
+    xmonad $ docks . ewmh $ def
         { manageHook         = myManageHook <+> manageDocks
-        , handleEventHook    = docksEventHook
-                               -- Uncomment this line to enable fullscreen support on things like YouTube/Netflix.
-                               -- This works perfect on SINGLE monitor systems. On multi-monitor systems,
-                               -- it adds a border around the window if screen does not have focus. So, my solution
-                               -- is to use a keybinding to toggle fullscreen noborders instead.  (M-<Space>)
-                               <+> fullscreenEventHook
+        , handleEventHook    = windowedFullscreenFixEventHook
         , modMask            = myModMask
         , terminal           = myTerminal
         , startupHook        = myStartupHook
@@ -480,7 +469,7 @@ main = do
         , borderWidth        = myBorderWidth
         , normalBorderColor  = myNormColor
         , focusedBorderColor = myFocusColor
-        , logHook = dynamicLogWithPP $ namedScratchpadFilterOutWorkspacePP $ xmobarPP
+        , logHook = dynamicLogWithPP $ filterOutWsPP [scratchpadWorkspaceTag] $ xmobarPP
               -- the following variables beginning with 'pp' are settings for xmobar.
               { ppOutput = \x -> hPutStrLn xmproc x                                 -- xmobar on monitor 1
                            --   >> hPutStrLn xmproc1 x                              -- xmobar on monitor 2
