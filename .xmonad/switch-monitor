@@ -3,7 +3,7 @@
 EXTERNAL_MONITOR="HDMI-A-0"
 
 if xrandr --query | grep "$EXTERNAL_MONITOR connected"; then
-    xrandr --output $EXTERNAL_MONITOR --primary --auto --output eDP --off
+    xrandr --output $EXTERNAL_MONITOR --primary --auto --output eDP --right-of $EXTERNAL_MONITOR --mode 1280x720
 else
     xrandr --output eDP --primary --auto --output $EXTERNAL_MONITOR --off
 fi

@@ -98,20 +98,20 @@ myStartupHook :: X ()
 myStartupHook = do
     spawnOnce "/usr/libexec/polkit-gnome-authentication-agent-1 &"
     spawnOnce "~/bin/cache-init &"
-    spawnOnce "~/.xmonad/switch-monitor &"
+    spawnOnce "trayer --edge top --align right --widthtype percent --transparent true --alpha 0 --tint 0x282c34 --width 10 --height 24"
+    spawnOnce "~/.xmonad/switch-monitor"
     spawnOnce "volumeicon &"
     spawnOnce "compton -b"
     spawnOnce "xsettingsd &"                 -- antialiasing for Java apps, see ~/.xsettingsd
     spawnOnce "xrdb -merge ~/.Xresources &"  -- antialiasing for wine
-    spawnOnce "trayer --edge top --align right --widthtype percent --transparent true --alpha 0 --tint 0x282c34 --width 10 --height 24 &"
     spawnOnce "ibus-daemon -drxR"
     spawnOnce "shutter --min_at_startup &"
 
-    spawnOnce "~/.fehbg &"  -- set last saved feh wallpaper
+    -- spawnOnce "~/.fehbg"  -- set last saved feh wallpaper
     -- spawnOnce "xargs xwallpaper --stretch < ~/.xwallpaper"  -- set last saved with xwallpaper
     -- spawnOnce "/bin/ls ~/wallpapers | shuf -n 1 | xargs xwallpaper --stretch"  -- set random xwallpaper
     -- spawnOnce "feh --randomize --bg-fill ~/wallpapers/*"  -- feh set random wallpaper
-    -- spawnOnce "nitrogen --restore &"   -- if you prefer nitrogen to feh
+    spawnOnce "nitrogen --restore &"   -- if you prefer nitrogen to feh
     setWMName "LG3D"
 
 myColorizer :: Window -> Bool -> X (String, String)
@@ -174,9 +174,9 @@ myScratchPads = [ NS "terminal" spawnTerm findTerm manageTerm
     manageCalc = customFloating $ W.RationalRect l t w h
                where
                  h = 0.5
-                 w = 0.4
+                 w = 0.2
                  t = 0.75 -h
-                 l = 0.70 -w
+                 l = 0.60 -w
     spawnInput  = "~/bin/steam-input-helper"
     findInput   = title =? "Steam Linux input helper"
     manageInput = customFloating $ W.RationalRect l t w h
@@ -187,13 +187,13 @@ myScratchPads = [ NS "terminal" spawnTerm findTerm manageTerm
                  l = 0.5 -w
 
 --Makes setting the spacingRaw simpler to write. The spacingRaw module adds a configurable amount of space around windows.
---mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
---mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
+mySpacing :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
+mySpacing i = spacingRaw False (Border i i i i) True (Border i i i i) True
 
 -- Below is a variation of the above except no borders are applied
 -- if fewer than two windows. So a single window has no gaps.
---mySpacing' :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
---mySpacing' i = spacingRaw True (Border i i i i) True (Border i i i i) True
+mySpacing' :: Integer -> l a -> XMonad.Layout.LayoutModifier.ModifiedLayout Spacing l a
+mySpacing' i = spacingRaw True (Border i i i i) True (Border i i i i) True
 
 -- Defining a bunch of layouts, many that I don't use.
 -- limitWindows n sets maximum number of windows displayed for layout.
@@ -204,7 +204,7 @@ tall     = renamed [Replace "tall"]
            $ addTabs shrinkText myTabTheme
            $ subLayout [] (smartBorders Simplest)
            $ limitWindows 12
---           $ mySpacing 8
+          -- $ mySpacing 8
            $ ResizableTall 1 (3/100) (1/2) []
 -- magnify  = renamed [Replace "magnify"]
 --            $ smartBorders
@@ -215,22 +215,22 @@ tall     = renamed [Replace "tall"]
 --            $ limitWindows 12
 -- --           $ mySpacing 8
 --            $ ResizableTall 1 (3/100) (1/2) []
-monocle  = renamed [Replace "monocle"]
-           $ smartBorders
-           $ windowNavigation
-           $ addTabs shrinkText myTabTheme
-           $ subLayout [] (smartBorders Simplest)
-           $ limitWindows 20 Full
--- floats   = renamed [Replace "floats"]
+-- monocle  = renamed [Replace "monocle"]
 --            $ smartBorders
---            $ limitWindows 20 simplestFloat
-grid     = renamed [Replace "grid"]
+--            $ windowNavigation
+--            $ addTabs shrinkText myTabTheme
+--            $ subLayout [] (smartBorders Simplest)
+--            $ limitWindows 20 Full
+floats   = renamed [Replace "floats"]
            $ smartBorders
+           $ limitWindows 20 simplestFloat
+grid     = renamed [Replace "grid"]
+           $ withBorder 2
            $ windowNavigation
            $ addTabs shrinkText myTabTheme
            $ subLayout [] (smartBorders Simplest)
            $ limitWindows 12
---           $ mySpacing 8
+           -- $ mySpacing 4
            $ mkToggle (single MIRROR)
            $ Grid (16/10)
 -- spirals  = renamed [Replace "spirals"]
@@ -286,14 +286,14 @@ myShowWNameTheme = def
     }
 
 -- The layout hook
-myLayoutHook = avoidStruts $ mouseResize $ windowArrange -- $ T.toggleLayouts floats
+myLayoutHook = avoidStruts $ mouseResize $ windowArrange $ T.toggleLayouts floats
                $ mkToggle (NBFULL ?? NOBORDERS ?? EOT) myDefaultLayout
              where
                myDefaultLayout =     withBorder myBorderWidth tall
                                  ||| noBorders tabs
                                  -- ||| magnify
-                                 ||| noBorders monocle
-                                 -- ||| floats
+                                 -- ||| noBorders monocle
+                                 ||| floats
                                  ||| grid
                                  -- ||| spirals
                                  -- ||| threeCol
@@ -322,17 +322,16 @@ myManageHook = composeAll
      , className =? "splash"          --> doFloat
      , className =? "toolbar"         --> doFloat
      , className =? "re.sonny.Commit" --> doFloat
-     , appName =? "google-chrome"     --> doShift "www"
+     , appName =? "pavucontrol"       --> doFloat
      , appName =? "brave-browser"     --> doShift "www"
      , appName =? "kicad"             --> doShift "eda" -- ( myWorkspaces !! 2 )
      , title   =? "STM32CubeMX Untitled" --> doShift "eda"
      , title   =? "MEGAsync"          --> doFloat
-     , appName =? "discord"           --> doShift "mus"
      , appName =? "keybase"           --> doFloat
-     , title  =? "Steam"              --> doShift "gfx"
+     , title   =? "GameHub"           --> doFloat >> doShift "gfx"
+     , title   =? "Steam"             --> doShift "gfx"
      , (className  =? "Steam" <&&> fmap (/= "Steam") title) --> doFloat
      , className  =? "itch"           --> doShift "gfx"
-     , appName =? "vpnui"             --> doShift "bg"
      , (className =? "firefox" <&&> resource =? "Dialog") --> doFloat  -- Float Firefox Dialog
      , isFullscreen -->  doFullFloat
      ] <+> namedScratchpadManageHook myScratchPads
@@ -346,6 +345,8 @@ myKeys =
 
     -- Run Prompt
         , ("M-S-<Return>", spawn "dmenu_run -i -p \"Run: \"") -- Dmenu
+        , ("M-S-M1-<Return>", spawn "rofi -show drun") -- Application menu
+        , ("M-S-C-<Return>", spawn "rofi -show run") -- Program menu
 
     -- Useful programs to have a keybinding for launch
         , ("M-<Return>", spawn myTerminal)
@@ -455,7 +456,7 @@ main :: IO ()
 main = do
     -- Launching multiple instances of xmobar on their monitors. (if you have those many)
     xmproc  <- spawnPipe "xmobar -x 0 $HOME/.config/xmobar/xmobarrc"
-    -- xmproc1 <- spawnPipe "xmobar -x 1 $HOME/.config/xmobar/xmobarrc1"
+    xmproc1 <- spawnPipe "xmobar -x 1 $HOME/.config/xmobar/xmobarrc1"
     -- xmproc2 <- spawnPipe "xmobar -x 2 $HOME/.config/xmobar/xmobarrc2"
     -- the xmonad, ya know...what the WM is named after!
     xmonad $ docks . ewmh $ def
@@ -472,7 +473,7 @@ main = do
         , logHook = dynamicLogWithPP $ filterOutWsPP [scratchpadWorkspaceTag] $ xmobarPP
               -- the following variables beginning with 'pp' are settings for xmobar.
               { ppOutput = \x -> hPutStrLn xmproc x                                 -- xmobar on monitor 1
-                           --   >> hPutStrLn xmproc1 x                              -- xmobar on monitor 2
+                              >> hPutStrLn xmproc1 x                                -- xmobar on monitor 2
                            --   >> hPutStrLn xmproc2 x                              -- xmobar on monitor 3
               , ppCurrent = xmobarColor "#98be65" "" . wrap "[" "]"                 -- Current workspace
               , ppVisible = xmobarColor "#98be65" "" . clickable                    -- Visible but not current workspace

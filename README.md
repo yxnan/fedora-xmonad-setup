@@ -23,9 +23,9 @@ This `xmonad.hs` is based on [DistroTube's setup](https://gitlab.com/dwt1/dotfil
 	# slock:        screen lock
 	# pactl:        volume control
 	# light:        brightness adjust
-	# fehbg:        wallpaper setting
+	# nitrogen      wallpaper setting
 	# lxappearance: gtk2 app theme setting
-	sudo dnf install compton xmobar alacritty fish dmenu slock xdotool pulseaudio-utils light feh lxappearance
+	sudo dnf install compton xmobar alacritty fish dmenu slock xdotool pulseaudio-utils light nitrogen lxappearance
 
 	# import RPM Sphere repository to get trayer
 	# RPM Fusion is enabled by default in Fedora 35 Desktop,
