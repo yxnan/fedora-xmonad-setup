@@ -204,7 +204,7 @@ tall     = renamed [Replace "tall"]
            $ addTabs shrinkText myTabTheme
            $ subLayout [] (smartBorders Simplest)
            $ limitWindows 12
-          -- $ mySpacing 8
+          --  $ mySpacing 8
            $ ResizableTall 1 (3/100) (1/2) []
 -- magnify  = renamed [Replace "magnify"]
 --            $ smartBorders
@@ -230,7 +230,7 @@ grid     = renamed [Replace "grid"]
            $ addTabs shrinkText myTabTheme
            $ subLayout [] (smartBorders Simplest)
            $ limitWindows 12
-           -- $ mySpacing 4
+           --  $ mySpacing 4
            $ mkToggle (single MIRROR)
            $ Grid (16/10)
 -- spirals  = renamed [Replace "spirals"]
@@ -291,15 +291,15 @@ myLayoutHook = avoidStruts $ mouseResize $ windowArrange $ T.toggleLayouts float
              where
                myDefaultLayout =     withBorder myBorderWidth tall
                                  ||| noBorders tabs
-                                 -- ||| magnify
-                                 -- ||| noBorders monocle
+                                 --  ||| magnify
+                                 --  ||| noBorders monocle
                                  ||| floats
                                  ||| grid
-                                 -- ||| spirals
-                                 -- ||| threeCol
-                                 -- ||| threeRow
-                                 -- ||| tallAccordion
-                                 -- ||| wideAccordion
+                                 --  ||| spirals
+                                 --  ||| threeCol
+                                 --  ||| threeRow
+                                 --  ||| tallAccordion
+                                 --  ||| wideAccordion
 
 myWorkspaces = ["dev", "www", "doc", "eda", "utl", "mus", "vid", "gfx", "bg"]
 myWorkspaceIndices = M.fromList $ zip myWorkspaces [1..] -- (,) == \x y -> (x,y)
